@@ -23,7 +23,15 @@ const GEMINI_API_KEY = process.env.Google_ai_studio_key || process.env.GEMINI_AP
 
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-// Robust helper to query Google AI Studio models (Gemma / Gemini)
+// Middleware
+app.use(cors());
+app.use(bodyParser.json({ limit: '20mb' }));
+app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
+app.use(express.static(path.join(__dirname, 'dist')));
+
+// ---------------------------------------------------------------------------
+// Google AI Studio LLM Pipeline (Google Gemma & Gemini Models)
+// ---------------------------------------------------------------------------
 function extractJSONObject(text) {
   if (!text) return null;
   try { return JSON.parse(text); } catch (e) {}
@@ -75,14 +83,9 @@ async function callGoogleAIStudio(prompt, jsonMode = false) {
   throw new Error('All candidate Google AI Studio models failed');
 }
 
-app.use(cors());
-app.use(bodyParser.json({ limit: '20mb' }));
-app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
-
-// Serve static frontend files from dist folder
-app.use(express.static(path.join(__dirname, 'dist')));
-
-// MongoDB Atlas Connection Setup with Fallback
+// ---------------------------------------------------------------------------
+// Database & Vision Model Initialization
+// ---------------------------------------------------------------------------
 let isMongoConnected = false;
 
 const connectMongoDB = async () => {
@@ -92,17 +95,15 @@ const connectMongoDB = async () => {
       isMongoConnected = true;
       console.log('✅ Connected to MongoDB Atlas Cluster');
     } else {
-      console.warn('⚠️ MONGODB_URI not set in .env. Running with in-memory store fallback.');
+      console.warn('⚠️ MONGODB_URI not set. Running with in-memory fallback store.');
     }
   } catch (err) {
     console.warn('⚠️ MongoDB Atlas connection error, using resilient fallback store:', err.message);
     isMongoConnected = false;
   }
 };
-
 connectMongoDB();
 
-// Initialize TensorFlow & MobileNet Model
 let mobilenetModel = null;
 const initMobileNet = async () => {
   try {
@@ -110,15 +111,16 @@ const initMobileNet = async () => {
     mobilenetModel = await mobilenet.load();
     console.log('✅ Loaded MobileNet Vision Object Classifier Model');
   } catch (err) {
-    console.warn('⚠️ Could not load MobileNet model, using color spectrum classifier fallback:', err.message);
+    console.warn('⚠️ Could not load MobileNet model, using color spectrum fallback:', err.message);
   }
 };
 initMobileNet();
 
-// In-Memory Fallback Store for Resilience
 const inMemoryCiphers = new Map();
 
-// Helper: Generate clean 6-character short code (e.g., OAK-784 or BTL-9B2)
+// ---------------------------------------------------------------------------
+// Helper Functions & Vision Pipeline
+// ---------------------------------------------------------------------------
 function generateShortCode(keyName = 'SPECIMEN') {
   const cleanName = keyName.replace(/[^a-zA-Z]/g, '').substring(0, 3) || 'KEY';
   const prefix = cleanName.toUpperCase();
@@ -126,7 +128,6 @@ function generateShortCode(keyName = 'SPECIMEN') {
   return `${prefix}-${suffix}`;
 }
 
-// Convert RGB to HSL
 function rgbToHsl(r, g, b) {
   r /= 255; g /= 255; b /= 255;
   const max = Math.max(r, g, b), min = Math.min(r, g, b);
@@ -147,7 +148,6 @@ function rgbToHsl(r, g, b) {
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
-// Classify Image Object using MobileNet AI Model
 async function classifyImageObject(imgBuffer) {
   if (!mobilenetModel) return null;
 
@@ -177,7 +177,9 @@ async function classifyImageObject(imgBuffer) {
   return null;
 }
 
-// Dynamic AI Semantic Category Referee (Google AI Studio Gemma / Gemini)
+// ---------------------------------------------------------------------------
+// Dynamic AI Semantic Category Referee
+// ---------------------------------------------------------------------------
 async function evaluateDynamicSemanticMatch(label1, label2) {
   if (!label1 || !label2) return { isSameCategory: true, reason: 'Visual feature matching.' };
   if (!GEMINI_API_KEY) return { isSameCategory: true, reason: 'Fallback visual matching.' };
@@ -188,14 +190,8 @@ Target object label: "${label1}"
 Scanned object label: "${label2}"
 
 Determine if the scanned object belongs to the SAME physical category/species as the target.
-Examples:
-- Two dog breeds (e.g. "corgi" vs "retriever") -> true (both are dogs).
-- House cat vs cheetah -> false (domestic cat vs wild big cat).
-- Dog vs Cat -> false.
-- Flower vs Flower -> true.
-- Water bottle vs Dog -> false.
 
-Respond ONLY with a valid JSON object with format:
+Respond ONLY with a valid JSON object:
 {
   "isSameCategory": true or false,
   "confidence": 0-100,
@@ -215,7 +211,9 @@ Respond ONLY with a valid JSON object with format:
   return { isSameCategory: true, reason: 'Dynamic visual evaluation.' };
 }
 
-// Visual Image Feature Profile Extractor (using Sharp & MobileNet)
+// ---------------------------------------------------------------------------
+// Feature Extraction & Visual Profile Fingerprinting
+// ---------------------------------------------------------------------------
 async function extractImageProfile(base64Data) {
   if (!base64Data || typeof base64Data !== 'string') {
     return getDefaultProfile();
@@ -225,10 +223,8 @@ async function extractImageProfile(base64Data) {
     const base64Content = base64Data.replace(/^data:image\/[^;]+;base64,/, '');
     const imgBuffer = Buffer.from(base64Content, 'base64');
 
-    // 1. MobileNet Object Identification
     const objectPrediction = await classifyImageObject(imgBuffer);
 
-    // 2. Resized 64x64 raw RGBA pixel buffer
     const { data, info } = await sharp(imgBuffer)
       .resize(64, 64, { fit: 'fill' })
       .ensureAlpha()
@@ -280,7 +276,6 @@ async function extractImageProfile(base64Data) {
       b: Math.round(quadB[idx] / Math.max(1, quadCount[idx]))
     }));
 
-    // 3. Grayscale 9x8 for 64-bit dHash perceptual fingerprint
     const grayData = await sharp(imgBuffer)
       .resize(9, 8, { fit: 'fill' })
       .grayscale()
@@ -296,7 +291,6 @@ async function extractImageProfile(base64Data) {
       }
     }
 
-    // Determine visual category & descriptive string
     const categoryInfo = describeVisualProfile(avgR, avgG, avgB, hsl, brightness, objectPrediction);
 
     return {
@@ -366,16 +360,13 @@ function describeVisualProfile(r, g, b, hsl, brightness, prediction) {
   return { dominantColors, colorFamily, texture, contrast };
 }
 
-// Compare two Visual Image Profiles using Perceptual Math + Dynamic AI Semantic Referee
 async function compareProfiles(p1, p2) {
   if (!p1 || !p2) return { similarity: 0, reasoning: 'Missing image profile.' };
 
-  // 1. Hue distance (0 - 180 degrees diff)
   let hueDiff = Math.abs((p1.hsl?.h || 0) - (p2.hsl?.h || 0));
   if (hueDiff > 180) hueDiff = 360 - hueDiff;
   const hueScore = Math.max(0, 100 - (hueDiff / 1.8));
 
-  // 2. RGB Euclidean distance
   const distRGB = Math.sqrt(
     Math.pow((p1.avgR || 0) - (p2.avgR || 0), 2) +
     Math.pow((p1.avgG || 0) - (p2.avgG || 0), 2) +
@@ -383,7 +374,6 @@ async function compareProfiles(p1, p2) {
   );
   const rgbScore = Math.max(0, 100 - (distRGB / 4.4167));
 
-  // 3. Histogram Intersection Similarity (0 to 1)
   let histIntersection = 0;
   const hist1 = p1.normHist || [];
   const hist2 = p2.normHist || [];
@@ -392,7 +382,6 @@ async function compareProfiles(p1, p2) {
   }
   const histScore = Math.round(histIntersection * 100);
 
-  // 4. dHash Hamming Distance
   let hammingDistance = 0;
   const h1 = p1.hashBits || '0'.repeat(64);
   const h2 = p2.hashBits || '0'.repeat(64);
@@ -401,7 +390,6 @@ async function compareProfiles(p1, p2) {
   }
   const hashScore = Math.max(0, Math.round(((64 - hammingDistance) / 64) * 100));
 
-  // 5. Quad region layout score
   let quadDiffSum = 0;
   const q1 = p1.quadAvgs || new Array(4).fill({ r: 0, g: 0, b: 0 });
   const q2 = p2.quadAvgs || new Array(4).fill({ r: 0, g: 0, b: 0 });
@@ -413,7 +401,6 @@ async function compareProfiles(p1, p2) {
   }
   const quadScore = Math.max(0, 100 - ((quadDiffSum / 4) / 2.55));
 
-  // Base perceptual similarity score
   const baseSimilarity = Math.round(
     (hueScore * 0.25) +
     (rgbScore * 0.20) +
@@ -422,7 +409,6 @@ async function compareProfiles(p1, p2) {
     (quadScore * 0.10)
   );
 
-  // 6. Dynamic AI Semantic Evaluation (100% Dynamic - Zero hardcoded arrays)
   let finalSimilarity = baseSimilarity;
   let domainNote = '';
 
@@ -443,8 +429,10 @@ async function compareProfiles(p1, p2) {
   return { similarity: finalSimilarity, reasoning: domainNote };
 }
 
-// Generate dynamic riddle matching uploaded photo via Google AI Studio Gemma / Gemini LLM
-async function generateGroqDynamicRiddle(visualProfile) {
+// ---------------------------------------------------------------------------
+// Dynamic AI Riddle Generation
+// ---------------------------------------------------------------------------
+async function generateDynamicRiddle(visualProfile) {
   if (!GEMINI_API_KEY) {
     return getFallbackRiddle(visualProfile);
   }
@@ -461,7 +449,7 @@ A user uploaded an outdoor photo with these real analyzed properties:
 - Lighting: ${visualProfile.contrast}
 
 Based strictly on the detected object and visual properties, generate a valid JSON object with:
-1. "keyName": A short, realistic 2-4 word name for this specific object (e.g. "Mottled Corgi Pup", "Tabby Kitten", "White Metal Water Bottle", "Golden Sunflower Petal", "Mossy Pine Bark", "Emerald Fern Leaf", "Leather Running Shoe", "Classic Red Convertible").
+1. "keyName": A short, realistic 2-4 word name for this specific object.
 2. "features": An array of 3 distinct visual features matching the photo.
 3. "riddle": A clever, poetic 2-line riddle that hints at this specific physical object so someone can locate it outdoors.
 
@@ -498,9 +486,11 @@ function getFallbackRiddle(visualProfile) {
   };
 }
 
-// ==========================================
+// ---------------------------------------------------------------------------
+// Express API Routes
+// ---------------------------------------------------------------------------
+
 // 1. POST /api/cipher/create (Player 1 Flow)
-// ==========================================
 app.post('/api/cipher/create', async (req, res) => {
   try {
     const { imageBase64, secretMessage, customRiddle } = req.body;
@@ -509,16 +499,14 @@ app.post('/api/cipher/create', async (req, res) => {
       return res.status(400).json({ success: false, error: 'secretMessage is required' });
     }
 
-    // Step 1: Extract real visual profile & fingerprint using Sharp & MobileNet
     const fingerprint = await extractImageProfile(imageBase64);
 
-    // Step 2: Generate dynamic AI riddle matching uploaded image
     let keyName = fingerprint.objectLabel || fingerprint.colorFamily;
     let features = [fingerprint.dominantColors, fingerprint.texture, fingerprint.contrast];
     let riddle = customRiddle || null;
 
     if (!riddle) {
-      const aiGenerated = await generateGroqDynamicRiddle(fingerprint);
+      const aiGenerated = await generateDynamicRiddle(fingerprint);
       keyName = aiGenerated.keyName;
       features = aiGenerated.features;
       riddle = aiGenerated.riddle;
@@ -544,7 +532,7 @@ app.post('/api/cipher/create', async (req, res) => {
       inMemoryCiphers.set(shortCode, newCipherData);
     }
 
-    console.log(`🔒 Created Cipher [${shortCode}] for "${keyName}". Riddle: "${riddle}"`);
+    console.log(`🔒 Created Cipher [${shortCode}] for "${keyName}".`);
 
     return res.status(201).json({
       success: true,
@@ -558,9 +546,7 @@ app.post('/api/cipher/create', async (req, res) => {
   }
 });
 
-// ==========================================
 // 2. GET /api/cipher/:shortCode (Player 2 Clue Fetch)
-// ==========================================
 app.get('/api/cipher/:shortCode', async (req, res) => {
   try {
     const shortCode = req.params.shortCode.toUpperCase().trim();
@@ -576,7 +562,6 @@ app.get('/api/cipher/:shortCode', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Cipher not found with code: ' + shortCode });
     }
 
-    // Security Rule: Return ONLY public clue information (never leak secretMessage, keyName, or features)
     return res.json({
       success: true,
       shortCode: cipherDoc.shortCode,
@@ -590,9 +575,7 @@ app.get('/api/cipher/:shortCode', async (req, res) => {
   }
 });
 
-// ==========================================
 // 3. POST /api/cipher/unlock (Player 2 Verification Flow)
-// ==========================================
 app.post('/api/cipher/unlock', async (req, res) => {
   try {
     const { shortCode, player2ImageBase64 } = req.body;
@@ -614,14 +597,12 @@ app.post('/api/cipher/unlock', async (req, res) => {
       return res.status(404).json({ success: false, error: 'Cipher record not found.' });
     }
 
-    // Step 2: Compare Player 2 Photo Visual Profile against Target Cipher Fingerprint
     const p2Profile = await extractImageProfile(player2ImageBase64);
     const targetProfile = cipher.fingerprint || getDefaultProfile();
 
-    const { similarity, reasoning: domainReasoning } = await compareProfiles(p2Profile, targetProfile);
-    console.log(`🧐 Dynamic AI Visual Verification for [${codeUpper}] (${cipher.keyName}): Similarity = ${similarity}%`);
+    const { similarity } = await compareProfiles(p2Profile, targetProfile);
+    console.log(`🧐 Verification for [${codeUpper}] (${cipher.keyName}): Similarity = ${similarity}%`);
 
-    // Strict Verification Threshold: Requires >= 60% Visual Similarity to match target object!
     const isMatch = similarity >= 60;
 
     let reasoning = '';
@@ -631,7 +612,6 @@ app.post('/api/cipher/unlock', async (req, res) => {
       reasoning = `Visual match rejected (${similarity}% similarity score). The uploaded photo does not match the secret target object. Read the riddle clue carefully and try again!`;
     }
 
-    // Step 3: Resolution
     if (isMatch) {
       cipher.solved = true;
       if (isMongoConnected) {
