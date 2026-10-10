@@ -7,9 +7,14 @@ import sharp from 'sharp';
 import * as tf from '@tensorflow/tfjs-core';
 import '@tensorflow/tfjs-backend-cpu';
 import * as mobilenet from '@tensorflow-models/mobilenet';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import Cipher from './models/Cipher.js';
 
 dotenv.config();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -18,6 +23,9 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 app.use(cors());
 app.use(bodyParser.json({ limit: '20mb' }));
 app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
+
+// Serve static frontend files from dist folder
+app.use(express.static(path.join(__dirname, 'dist')));
 
 // MongoDB Atlas Connection Setup with Fallback
 let isMongoConnected = false;
@@ -627,6 +635,12 @@ app.post('/api/cipher/unlock', async (req, res) => {
     console.error('Error unlocking cipher:', error);
     return res.status(500).json({ success: false, error: error.message });
   }
+});
+
+// Catch-all route to serve React frontend SPA
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
+  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
 });
 
 app.listen(PORT, () => {

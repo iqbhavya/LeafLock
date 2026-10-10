@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api/cipher';
+const API_BASE_URL = import.meta.env.VITE_API_URL || '/api/cipher';
 
 export async function createCipher(imageBase64, secretMessage, customRiddle = '') {
   try {
