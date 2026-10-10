@@ -9,10 +9,10 @@ Built for **Hacktoberfest 2026** (`#hf26challenge`), **Global Hack Week (GHW)**,
 ## 🏆 Hacktoberfest Prize Categories & Alignment
 
 * **Touch Grass Challenge (`#hf26challenge`)**: Asynchronous 2-player outdoor game that encourages participants to step outside, explore flora/fauna, and engage with nature.
-* **Best Use of Gemma ($200)**: Uses Google's **`gemma2-9b-it`** open-weights LLM running via Groq API to dynamically synthesize 2-line cryptic riddles based on real-time detected botanical, object, and color features.
+* **Best Use of Gemma ($200)**: Uses **Google AI Studio** and **Google Gemma models (`gemma-4-31b-it`, `gemma-4-26b-a4b-it`)** to dynamically synthesize 2-line cryptic riddles based on real-time detected botanical, object, and color features.
 * **Best Use of MongoDB Atlas**: Uses **MongoDB Atlas (M0 Cluster)** with Mongoose models to securely manage `shortCode`s, extracted visual features, riddles, and completion states without storing raw Base64 photos.
-* **AI Vision & Dynamic LLM Engine**: Integrates **MobileNet Neural Network** for object classification, **`sharp`** for perceptual dHash and 64-bin color histogram extraction, and **Groq LLM (`gemma2-9b-it`)** for dynamic riddle synthesis.
-* **Zero-Hardcoding Dynamic Referee**: Evaluates photo matches dynamically using perceptual dHash, 64-bin color histogram intersection, and Groq AI semantic category evaluation.
+* **AI Vision & Dynamic LLM Engine**: Integrates **MobileNet Neural Network** for object classification, **`sharp`** for perceptual dHash and 64-bin color histogram extraction, and **Google AI Studio Gemma LLM** for dynamic riddle synthesis.
+* **Zero-Hardcoding Dynamic Referee**: Evaluates photo matches dynamically using perceptual dHash, 64-bin color histogram intersection, and Google AI Studio Gemma semantic category evaluation.
 
 ---
 
@@ -21,14 +21,14 @@ Built for **Hacktoberfest 2026** (`#hf26challenge`), **Global Hack Week (GHW)**,
 ### 🔒 1. Tab 1: "Lock a Secret" (Player 1 Flow)
 * **Input**: Upload or snap a photo of any physical object + enter secret message (optional custom riddle).
 * **Vision & Feature Extraction**: MobileNet classifies object category while `sharp` extracts dHash perceptual fingerprint, HSL color space, and color histogram.
-* **Dynamic AI Riddle Generation (Google Gemma 2 via Groq)**: Auto-crafts a poetic 2-line cryptic riddle guiding someone outdoors to find the object without spoiling its name directly using `gemma2-9b-it`.
+* **Dynamic AI Riddle Generation (Google AI Studio Gemma)**: Auto-crafts a poetic 2-line cryptic riddle guiding someone outdoors to find the object without spoiling its name directly using Google Gemma models.
 * **MongoDB Atlas Storage**: Generates a clean 6-character shortCode (e.g., `DOG-784`, `OAK-9B2`) and stores record in MongoDB Atlas.
 
 ### 📸 2. Tab 2: "Decrypt a Message" (Player 2 Flow)
 * **Clue Lookup (`GET /api/cipher/:shortCode`)**: Player 2 enters the `shortCode`. Retrieves public clue (`riddle`, `solved`, `createdAt`). *Never leaks secretMessage, keyName, or features.*
 * **Touch Grass & Snap Photo**: Player 2 steps outside, locates the physical object, and snaps a photo with `<input accept="image/*" capture="environment" />`.
 * **Zero-Spoiler AI Referee (`POST /api/cipher/unlock`)**:
-  * Compares visual dHash, color spectrum, and MobileNet object labels via Groq AI (`gemma2-9b-it`) semantic evaluation.
+  * Compares visual dHash, color spectrum, and MobileNet object labels via Google AI Studio Gemma semantic evaluation.
   * **Match Criteria**: Requires $\ge 60\%$ similarity score + semantic category match.
   * **Privacy & Mystery**: Rejection error messages give general guidance without leaking the target's answer or name!
 * **Resolution**:
@@ -62,7 +62,7 @@ npm install
 # 2. Setup Environment Variables (.env)
 PORT=5000
 MONGODB_URI=mongodb+srv://<username>:<password>@cluster0.../leaflock?retryWrites=true&w=majority
-GROQ_API_KEY=gsk_...
+Google_ai_studio_key=AQ.Ab8RN...
 
 # 3. Start Backend Express Server (Port 5000)
 node server.js
@@ -70,3 +70,4 @@ node server.js
 # 4. Start Frontend Vite Server (Port 5173)
 npm run dev
 ```
+

@@ -9,6 +9,7 @@ import '@tensorflow/tfjs-backend-cpu';
 import * as mobilenet from '@tensorflow-models/mobilenet';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import Cipher from './models/Cipher.js';
 
 dotenv.config();
@@ -18,7 +19,61 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const GROQ_API_KEY = process.env.GROQ_API_KEY;
+const GEMINI_API_KEY = process.env.Google_ai_studio_key || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_STUDIO_KEY || process.env.GROQ_API_KEY;
+
+const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
+
+// Robust helper to query Google AI Studio models (Gemma / Gemini)
+function extractJSONObject(text) {
+  if (!text) return null;
+  try { return JSON.parse(text); } catch (e) {}
+
+  const stripped = text.replace(/```(?:json)?/gi, '').trim();
+  try { return JSON.parse(stripped); } catch (e) {}
+
+  const matches = [...text.matchAll(/\{[\s\S]*?\}/g)];
+  for (let i = matches.length - 1; i >= 0; i--) {
+    try {
+      const obj = JSON.parse(matches[i][0]);
+      if (typeof obj === 'object' && obj !== null) return obj;
+    } catch (e) {}
+  }
+
+  const match = text.match(/\{[\s\S]*\}/);
+  if (match) {
+    try { return JSON.parse(match[0]); } catch (e) {}
+  }
+  return null;
+}
+
+async function callGoogleAIStudio(prompt, jsonMode = false) {
+  if (!genAI) throw new Error('Google AI Studio API key not set');
+
+  const candidateModels = [
+    'gemma-4-31b-it',
+    'gemma-4-26b-a4b-it',
+    'gemini-3.8-flash',
+    'gemini-3.5-flash'
+  ];
+
+  for (const m of candidateModels) {
+    try {
+      const config = {};
+      if (jsonMode) {
+        config.responseMimeType = 'application/json';
+      }
+      const model = genAI.getGenerativeModel({ model: m, generationConfig: config });
+      const result = await model.generateContent(prompt);
+      const text = result.response.text();
+      if (text) {
+        return text;
+      }
+    } catch (err) {
+      console.warn(`Google AI Studio model (${m}) failed:`, err.message);
+    }
+  }
+  throw new Error('All candidate Google AI Studio models failed');
+}
 
 app.use(cors());
 app.use(bodyParser.json({ limit: '20mb' }));
@@ -122,10 +177,10 @@ async function classifyImageObject(imgBuffer) {
   return null;
 }
 
-// Dynamic AI Semantic Category Referee (No hardcoded arrays)
+// Dynamic AI Semantic Category Referee (Google AI Studio Gemma / Gemini)
 async function evaluateDynamicSemanticMatch(label1, label2) {
   if (!label1 || !label2) return { isSameCategory: true, reason: 'Visual feature matching.' };
-  if (!GROQ_API_KEY) return { isSameCategory: true, reason: 'Fallback visual matching.' };
+  if (!GEMINI_API_KEY) return { isSameCategory: true, reason: 'Fallback visual matching.' };
 
   const prompt = `You are a strict AI Object & Species Matcher for LeafLock steganography.
 Compare two AI-detected labels from two user photos:
@@ -140,7 +195,7 @@ Examples:
 - Flower vs Flower -> true.
 - Water bottle vs Dog -> false.
 
-Respond ONLY with valid JSON:
+Respond ONLY with a valid JSON object with format:
 {
   "isSameCategory": true or false,
   "confidence": 0-100,
@@ -148,26 +203,10 @@ Respond ONLY with valid JSON:
 }`;
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.1
-      })
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-      if (content) {
-        return JSON.parse(content);
-      }
+    const rawText = await callGoogleAIStudio(prompt, true);
+    const parsed = extractJSONObject(rawText);
+    if (parsed && typeof parsed.isSameCategory === 'boolean') {
+      return parsed;
     }
   } catch (e) {
     console.warn('Dynamic AI semantic match error:', e.message);
@@ -404,9 +443,9 @@ async function compareProfiles(p1, p2) {
   return { similarity: finalSimilarity, reasoning: domainNote };
 }
 
-// Generate dynamic riddle matching uploaded photo via Groq LLM
+// Generate dynamic riddle matching uploaded photo via Google AI Studio Gemma / Gemini LLM
 async function generateGroqDynamicRiddle(visualProfile) {
-  if (!GROQ_API_KEY) {
+  if (!GEMINI_API_KEY) {
     return getFallbackRiddle(visualProfile);
   }
 
@@ -421,7 +460,7 @@ A user uploaded an outdoor photo with these real analyzed properties:
 - Texture/Surface: ${visualProfile.texture}
 - Lighting: ${visualProfile.contrast}
 
-Based strictly on the detected object and visual properties, generate a JSON object with:
+Based strictly on the detected object and visual properties, generate a valid JSON object with:
 1. "keyName": A short, realistic 2-4 word name for this specific object (e.g. "Mottled Corgi Pup", "Tabby Kitten", "White Metal Water Bottle", "Golden Sunflower Petal", "Mossy Pine Bark", "Emerald Fern Leaf", "Leather Running Shoe", "Classic Red Convertible").
 2. "features": An array of 3 distinct visual features matching the photo.
 3. "riddle": A clever, poetic 2-line riddle that hints at this specific physical object so someone can locate it outdoors.
@@ -434,34 +473,17 @@ Format MUST be valid JSON:
 }`;
 
   try {
-    const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${GROQ_API_KEY}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-        temperature: 0.7
-      })
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      const content = data.choices?.[0]?.message?.content;
-      if (content) {
-        const parsed = JSON.parse(content);
-        return {
-          keyName: parsed.keyName || visualProfile.objectLabel || visualProfile.colorFamily,
-          features: Array.isArray(parsed.features) && parsed.features.length >= 3 ? parsed.features : [visualProfile.dominantColors, visualProfile.texture, visualProfile.contrast],
-          riddle: parsed.riddle || `Look closely where sunbeams play, find the ${visualProfile.colorFamily.toLowerCase()} to clear the way.`
-        };
-      }
+    const rawText = await callGoogleAIStudio(prompt, true);
+    const parsed = extractJSONObject(rawText);
+    if (parsed && parsed.keyName) {
+      return {
+        keyName: parsed.keyName || visualProfile.objectLabel || visualProfile.colorFamily,
+        features: Array.isArray(parsed.features) && parsed.features.length >= 3 ? parsed.features : [visualProfile.dominantColors, visualProfile.texture, visualProfile.contrast],
+        riddle: parsed.riddle || `Look closely where sunbeams play, find the ${visualProfile.colorFamily.toLowerCase()} to clear the way.`
+      };
     }
   } catch (e) {
-    console.warn('Groq dynamic riddle generation error:', e.message);
+    console.warn('Google AI Studio dynamic riddle generation error:', e.message);
   }
 
   return getFallbackRiddle(visualProfile);
