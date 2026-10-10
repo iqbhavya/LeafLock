@@ -1,5 +1,6 @@
 import React from 'react';
-import { Leaf, Lock, Key, Compass, Sparkles, HelpCircle } from 'lucide-react';
+import { Lock, Key, Compass, Sparkles, HelpCircle } from 'lucide-react';
+import leafIcon from '../assets/leaf.svg';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenHowItWorks, ciphersCount }) {
   return (
@@ -7,8 +8,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenHowItWorks, ciph
       {/* Top Header Card */}
       <div className="w-full glass-panel glass-panel-glow p-5 md:p-6 mb-6 flex flex-col md:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-emerald-400 to-emerald-600 flex items-center justify-center text-slate-950 font-black text-2xl shadow-lg shadow-emerald-500/25 shrink-0">
-            <Leaf className="w-7 h-7 text-emerald-950 stroke-[2.5]" />
+          <div className="w-12 h-12 rounded-2xl bg-slate-950/80 border-2 border-emerald-400/60 p-2 flex items-center justify-center shadow-lg shadow-emerald-500/25 shrink-0">
+            <img src={leafIcon} alt="LeafLock Logo" className="w-full h-full object-contain filter drop-shadow" />
           </div>
           <div>
             <div className="flex items-center gap-2.5 flex-wrap">
