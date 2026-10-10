@@ -637,10 +637,12 @@ app.post('/api/cipher/unlock', async (req, res) => {
   }
 });
 
-// Catch-all route to serve React frontend SPA
-app.get('*', (req, res, next) => {
-  if (req.path.startsWith('/api/')) return next();
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+// SPA fallback middleware for React frontend (Express 5 compatible)
+app.use((req, res, next) => {
+  if (req.method === 'GET' && !req.path.startsWith('/api/')) {
+    return res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  }
+  next();
 });
 
 app.listen(PORT, () => {
