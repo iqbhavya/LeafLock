@@ -58,8 +58,8 @@ async function callGoogleAIStudio(prompt, jsonMode = false) {
   if (!genAI) throw new Error('Google AI Studio API key not set');
 
   const candidateModels = [
-    'gemma-4-31b-it',
     'gemma-4-26b-a4b-it',
+    'gemma-4-31b-it',
     'gemini-3.8-flash',
     'gemini-3.5-flash'
   ];
