@@ -12,6 +12,7 @@ Built for **Hacktoberfest 2026** (`#hf26challenge`), **Global Hack Week (GHW)**,
 * **Best Use of Gemma ($200)**: Uses **Google AI Studio** and **Google Gemma models (`gemma-4-31b-it`, `gemma-4-26b-a4b-it`)** to dynamically synthesize 2-line cryptic riddles based on real-time detected botanical, object, and color features.
 * **Best Use of MongoDB Atlas**: Uses **MongoDB Atlas (M0 Cluster)** with Mongoose models to securely manage `shortCode`s, extracted visual features, riddles, and completion states without storing raw Base64 photos.
 * **AI Vision & Dynamic LLM Engine**: Integrates **MobileNet Neural Network** for object classification, **`sharp`** for perceptual dHash and 64-bin color histogram extraction, and **Google AI Studio Gemma LLM** for dynamic riddle synthesis.
+* **Best Use of Render ($200)**: Deployed the React/Vite web application and frontend asset pipeline on Render's global edge network to ensure fast, highly available access for users exploring outdoors.
 * **Zero-Hardcoding Dynamic Referee**: Evaluates photo matches dynamically using perceptual dHash, 64-bin color histogram intersection, and Google AI Studio Gemma semantic category evaluation.
 
 ---
