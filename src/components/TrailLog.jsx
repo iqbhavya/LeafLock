@@ -1,7 +1,8 @@
-import React from 'react';
-import { Compass, CheckCircle2, Lock, Key, Trash2, ArrowRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Compass, CheckCircle2, Lock, Key, Trash2, ArrowRight, Share2, Check } from 'lucide-react';
 
 export default function TrailLog({ ciphers, onSelectCipherToScan, onDeleteCipher }) {
+  const [copiedIdx, setCopiedIdx] = useState(null);
   if (ciphers.length === 0) {
     return (
       <div className="glass-panel p-8 text-center space-y-4">
@@ -37,11 +38,10 @@ export default function TrailLog({ ciphers, onSelectCipherToScan, onDeleteCipher
           {ciphers.map((cipher, index) => (
             <div
               key={index}
-              className={`p-4 rounded-xl border transition-all space-y-3 ${
-                cipher.solved
+              className={`p-4 rounded-xl border transition-all space-y-3 ${cipher.solved
                   ? 'bg-emerald-950/80 border-emerald-400/60'
                   : 'bg-emerald-950/40 border-emerald-900/60 hover:border-emerald-700/50'
-              }`}
+                }`}
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -74,19 +74,41 @@ export default function TrailLog({ ciphers, onSelectCipherToScan, onDeleteCipher
               </div>
 
               <div className="pt-2 border-t border-emerald-900/40 flex items-center justify-between text-xs">
-                <button
-                  onClick={() => onDeleteCipher(index)}
-                  className="text-red-400/70 hover:text-red-400 flex items-center gap-1 text-[11px]"
-                >
-                  <Trash2 className="w-3.5 h-3.5" /> Remove
-                </button>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono font-bold text-[11px] text-emerald-300 bg-emerald-950/90 px-2 py-0.5 rounded border border-emerald-800">
+                    {cipher.shortCode}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const url = `${window.location.origin}/?hunt=${cipher.shortCode}`;
+                      navigator.clipboard.writeText(url);
+                      setCopiedIdx(index);
+                      setTimeout(() => setCopiedIdx(null), 1500);
+                    }}
+                    title="Copy Hunt Link"
+                    className="p-1 text-emerald-400 hover:text-emerald-200 rounded hover:bg-emerald-900/40 transition-colors flex items-center gap-1 text-[11px]"
+                  >
+                    {copiedIdx === index ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Share2 className="w-3.5 h-3.5" />}
+                    <span>{copiedIdx === index ? 'Copied Link' : 'Share'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDeleteCipher(index)}
+                    className="text-red-400/60 hover:text-red-400 p-1 rounded hover:bg-red-950/30 transition-colors"
+                    title="Remove from vault"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
 
                 <button
+                  type="button"
                   onClick={() => onSelectCipherToScan(cipher)}
                   className="btn-secondary text-xs py-1 px-3 flex items-center gap-1"
                 >
                   <Key className="w-3 h-3" />
-                  <span>Scan & Decrypt</span>
+                  <span>Scan</span>
                   <ArrowRight className="w-3 h-3" />
                 </button>
               </div>

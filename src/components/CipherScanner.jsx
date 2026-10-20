@@ -1,7 +1,7 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { fetchCipherClue, unlockCipher } from '../api/cipherApi';
 import confetti from 'canvas-confetti';
-import { Camera, Search, Key, CheckCircle2, AlertCircle, Unlock, RefreshCw, Sparkles, Footprints, Upload, Image as ImageIcon } from 'lucide-react';
+import { Camera, Search, Key, AlertCircle, Unlock, RefreshCw, Sparkles, Footprints } from 'lucide-react';
 
 export default function CipherScanner({ initialShortCode }) {
   const [shortCodeInput, setShortCodeInput] = useState(initialShortCode || '');
@@ -16,16 +16,9 @@ export default function CipherScanner({ initialShortCode }) {
 
   const fileInputRef = useRef(null);
 
-  useEffect(() => {
-    if (initialShortCode) {
-      setShortCodeInput(initialShortCode);
-      handleFetchClue(initialShortCode);
-    }
-  }, [initialShortCode]);
-
-  const handleFetchClue = async (codeToFetch) => {
-    const targetCode = codeToFetch || shortCodeInput;
-    if (!targetCode.trim()) return;
+  const handleFetchClue = useCallback(async (codeToFetch) => {
+    const targetCode = (codeToFetch !== undefined ? codeToFetch : shortCodeInput).trim();
+    if (!targetCode) return;
 
     setIsFetchingClue(true);
     setClueError('');
@@ -33,7 +26,7 @@ export default function CipherScanner({ initialShortCode }) {
     setUnlockResult(null);
 
     try {
-      const result = await fetchCipherClue(targetCode.trim());
+      const result = await fetchCipherClue(targetCode);
       if (result.success) {
         setClueData(result);
       } else {
@@ -44,7 +37,14 @@ export default function CipherScanner({ initialShortCode }) {
     } finally {
       setIsFetchingClue(false);
     }
-  };
+  }, [shortCodeInput]);
+
+  useEffect(() => {
+    if (initialShortCode) {
+      setShortCodeInput(initialShortCode);
+      handleFetchClue(initialShortCode);
+    }
+  }, [initialShortCode, handleFetchClue]);
 
   const handleImageCapture = (e) => {
     const file = e.target.files?.[0];

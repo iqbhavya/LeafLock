@@ -6,11 +6,21 @@ import TrailLog from './components/TrailLog';
 import HowItWorksModal from './components/HowItWorksModal';
 
 export default function App() {
-  const [activeTab, setActiveTab] = useState('create');
-  const [targetShortCode, setTargetShortCode] = useState('');
+  const getInitialHuntCode = () => {
+    if (typeof window === 'undefined') return '';
+    try {
+      const params = new URLSearchParams(window.location.search);
+      return (params.get('hunt') || params.get('code') || '').toUpperCase().trim();
+    } catch {
+      return '';
+    }
+  };
+
+  const initialHuntCode = getInitialHuntCode();
+  const [activeTab, setActiveTab] = useState(initialHuntCode ? 'scan' : 'create');
+  const [targetShortCode, setTargetShortCode] = useState(initialHuntCode);
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
-  
-  
+
   const [ciphers, setCiphers] = useState([]);
 
   const handleCipherCreated = (newCipher) => {

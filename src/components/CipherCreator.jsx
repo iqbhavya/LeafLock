@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { createCipher } from '../api/cipherApi';
-import { Lock, Sparkles, Wand2, Copy, Check, Share2, Upload, Image, RefreshCw, X } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
+import { Lock, Sparkles, Copy, Check, Upload, Image, RefreshCw, X, QrCode, ExternalLink, MessageCircle } from 'lucide-react';
 
 export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
   const [secretMessage, setSecretMessage] = useState('');
@@ -11,6 +12,8 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
   const [isLoading, setIsLoading] = useState(false);
   const [createdResult, setCreatedResult] = useState(null);
   const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
+  const [showQR, setShowQR] = useState(true);
 
   const fileInputRef = useRef(null);
 
@@ -53,11 +56,30 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
     }
   };
 
+  const getHuntUrl = () => {
+    if (!createdResult) return '';
+    return `${window.location.origin}/?hunt=${createdResult.shortCode}`;
+  };
+
   const copyShareCode = () => {
     if (!createdResult) return;
     navigator.clipboard.writeText(createdResult.shortCode);
     setCopiedCode(true);
     setTimeout(() => setCopiedCode(false), 2000);
+  };
+
+  const copyHuntLink = () => {
+    if (!createdResult) return;
+    navigator.clipboard.writeText(getHuntUrl());
+    setCopiedLink(true);
+    setTimeout(() => setCopiedLink(false), 2000);
+  };
+
+  const shareWhatsApp = () => {
+    if (!createdResult) return;
+    const huntUrl = getHuntUrl();
+    const text = `🌿 LeafLock Outdoor Steganography Challenge!\n\nI locked a secret message behind a nature object. Read the AI riddle and take a matching photo to unlock it:\n\n${huntUrl}`;
+    window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -156,11 +178,10 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
               <button
                 type="button"
                 onClick={() => setUseCustomRiddle(!useCustomRiddle)}
-                className={`text-xs px-3 py-1 rounded-full border transition-all ${
-                  useCustomRiddle
+                className={`text-xs px-3 py-1 rounded-full border transition-all ${useCustomRiddle
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
                     : 'bg-emerald-950 text-emerald-400 border-emerald-800'
-                }`}
+                  }`}
               >
                 {useCustomRiddle ? 'Custom Riddle Active' : 'Let Google Gemma 2 Auto-Craft'}
               </button>
@@ -186,7 +207,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
             {isLoading ? (
               <>
                 <RefreshCw className="w-5 h-5 animate-spin text-slate-950" />
-                <span>Analyzing flora features with Llama 3.2 Vision & Gemma...</span>
+                <span>Analyzing flora features with MobileNet & Google Gemma...</span>
               </>
             ) : (
               <>
@@ -197,10 +218,10 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
           </button>
         </form>
 
-        {/* Success Modal */}
+        {/* Success Modal with QR Code and Direct Hunt Link */}
         {createdResult && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md animate-fade-in">
-            <div className="relative w-full max-w-lg glass-panel p-6 border-2 border-emerald-400 space-y-4 shadow-2xl">
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
+            <div className="relative w-full max-w-lg glass-panel p-6 border-2 border-emerald-400 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
               <div className="flex items-center justify-between border-b border-emerald-900/60 pb-3">
                 <div className="flex items-center gap-2">
                   <span className="text-2xl">🌿</span>
@@ -209,6 +230,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
                   </h3>
                 </div>
                 <button
+                  type="button"
                   onClick={() => setCreatedResult(null)}
                   className="p-1 rounded-lg text-emerald-400/70 hover:text-emerald-200"
                 >
@@ -228,24 +250,93 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
                 </div>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/40 flex items-center justify-between">
+              {/* Share Method Toggle */}
+              <div className="flex rounded-lg bg-slate-950 p-1 border border-emerald-900/60 text-xs font-semibold">
+                <button
+                  type="button"
+                  onClick={() => setShowQR(true)}
+                  className={`flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                    showQR ? 'bg-emerald-500 text-slate-950 font-bold shadow' : 'text-emerald-400/70 hover:text-emerald-200'
+                  }`}
+                >
+                  <QrCode className="w-3.5 h-3.5" />
+                  <span>Outdoor QR Code</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowQR(false)}
+                  className={`flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5 transition-all ${
+                    !showQR ? 'bg-emerald-500 text-slate-950 font-bold shadow' : 'text-emerald-400/70 hover:text-emerald-200'
+                  }`}
+                >
+                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>Link</span>
+                </button>
+              </div>
+
+              {/* QR Code Card */}
+              {showQR ? (
+                <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 text-center space-y-3">
+                  <div className="bg-white p-3 rounded-2xl w-fit mx-auto shadow-lg shadow-emerald-500/10">
+                    <QRCodeSVG
+                      value={getHuntUrl()}
+                      size={140}
+                      level="M"
+                      includeMargin={false}
+                    />
+                  </div>
+                  <p className="text-[11px] text-emerald-300/80 max-w-xs mx-auto">
+                    Point any phone camera at this QR code to jump straight into Decrypt Mode outdoors!
+                  </p>
+                </div>
+              ) : (
+                <div className="p-3.5 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-2.5">
+                  <p className="text-[11px] font-mono text-emerald-400">Direct Hunt URL:</p>
+                  <div className="p-2 rounded bg-emerald-950/60 border border-emerald-900 text-xs font-mono text-emerald-300 break-all select-all">
+                    {getHuntUrl()}
+                  </div>
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={copyHuntLink}
+                      className="flex-1 btn-primary text-xs py-2 flex items-center justify-center gap-1.5"
+                    >
+                      {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedLink ? 'Copied Link!' : 'Copy Link'}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={shareWhatsApp}
+                      className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 text-emerald-300 border-emerald-700 hover:border-emerald-400"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <span>WhatsApp</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* ShortCode backup */}
+              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-emerald-900/60 flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] text-emerald-400 font-mono">6-Character Cipher ShortCode:</p>
-                  <p className="text-xl font-mono font-black text-emerald-300 tracking-wider">
+                  <p className="text-[10px] text-emerald-400/80 font-mono">Game ShortCode:</p>
+                  <p className="text-lg font-mono font-black text-emerald-300 tracking-wider">
                     {createdResult.shortCode}
                   </p>
                 </div>
 
                 <button
+                  type="button"
                   onClick={copyShareCode}
-                  className="btn-primary text-xs py-2 px-4 flex items-center gap-1.5"
+                  className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
                 >
-                  {copiedCode ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
-                  <span>{copiedCode ? 'Copied Code!' : 'Copy Code'}</span>
+                  {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
                 </button>
               </div>
 
               <button
+                type="button"
                 onClick={() => {
                   if (onNavigateToScan) onNavigateToScan(createdResult.shortCode);
                   setCreatedResult(null);
