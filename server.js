@@ -57,30 +57,39 @@ function extractJSONObject(text) {
 async function callGoogleAIStudio(prompt, jsonMode = false) {
   if (!genAI) throw new Error('Google AI Studio API key not set');
 
+  // Primary fast high-throughput model
   const candidateModels = [
-    'gemma-4-26b-a4b-it',
-    'gemma-4-31b-it',
-    'gemini-3.8-flash',
-    'gemini-3.5-flash'
+    'gemini-3.5-flash-lite',
+    'gemini-flash-lite-latest'
   ];
 
   for (const m of candidateModels) {
     try {
-      const config = {};
+      const config = {
+        temperature: 0.6,
+        maxOutputTokens: 250
+      };
       if (jsonMode) {
         config.responseMimeType = 'application/json';
       }
       const model = genAI.getGenerativeModel({ model: m, generationConfig: config });
-      const result = await model.generateContent(prompt);
+
+      const apiCall = model.generateContent(prompt);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error(`Timeout after 12000ms on ${m}`)), 12000)
+      );
+
+      const result = await Promise.race([apiCall, timeoutPromise]);
       const text = result.response.text();
       if (text) {
         return text;
       }
     } catch (err) {
-      console.warn(`Google AI Studio model (${m}) failed:`, err.message);
+      console.warn(`Google AI Studio model (${m}) failed or timed out:`, err.message);
+      break; // Avoid stacking sequential 12s timeouts; fall back immediately
     }
   }
-  throw new Error('All candidate Google AI Studio models failed');
+  throw new Error('Candidate Google AI Studio models failed');
 }
 
 // ---------------------------------------------------------------------------
@@ -183,6 +192,30 @@ async function classifyImageObject(imgBuffer) {
 // ---------------------------------------------------------------------------
 async function evaluateDynamicSemanticMatch(label1, label2) {
   if (!label1 || !label2) return { isSameCategory: true, reason: 'Visual feature matching.' };
+
+  const l1 = label1.toLowerCase().trim();
+  const l2 = label2.toLowerCase().trim();
+
+  // Instant fast-path 1: Exact or substring match (0ms)
+  if (l1 === l2 || l1.includes(l2) || l2.includes(l1)) {
+    return { isSameCategory: true, confidence: 95, reason: `Direct match: detected "${label1}".` };
+  }
+
+  // Instant fast-path 2: Shared botanical key terms (0ms)
+  const botanicalWords = ['leaf', 'leaves', 'plant', 'flower', 'tree', 'stone', 'rock', 'bark', 'pine', 'grass', 'moss', 'daisy', 'rose', 'acorn', 'cone', 'petal', 'bloom'];
+  const words1 = l1.split(/[\s,/-]+/);
+  const words2 = l2.split(/[\s,/-]+/);
+
+  const commonSignificant = words1.filter(w => w.length > 3 && words2.includes(w));
+  if (commonSignificant.length > 0) {
+    return { isSameCategory: true, confidence: 90, reason: `Shared nature trait (${commonSignificant.join(', ')}).` };
+  }
+
+  const matchingBotanics = botanicalWords.filter(bw => l1.includes(bw) && l2.includes(bw));
+  if (matchingBotanics.length > 0) {
+    return { isSameCategory: true, confidence: 85, reason: `Both belong to the same outdoor botanical category (${matchingBotanics[0]}).` };
+  }
+
   if (!GEMINI_API_KEY) return { isSameCategory: true, reason: 'Fallback visual matching.' };
 
   const prompt = `You are a strict AI Object & Species Matcher for LeafLock steganography.
