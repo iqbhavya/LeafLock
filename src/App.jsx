@@ -11,16 +11,7 @@ export default function App() {
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   
   // Seed initial sample ciphers
-  const [ciphers, setCiphers] = useState([
-    {
-      shortCode: 'OAK-784',
-      keyName: 'Oak Leaf',
-      icon: '🍃',
-      riddle: 'I wear a crown of lobed green upon an ancient noble king. Look beneath the shade of acorns to hear the secret song I sing.',
-      createdAt: new Date().toLocaleDateString(),
-      solved: false
-    }
-  ]);
+  const [ciphers, setCiphers] = useState([]);
 
   const handleCipherCreated = (newCipher) => {
     if (newCipher && newCipher.shortCode) {
