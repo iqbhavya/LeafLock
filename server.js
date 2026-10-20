@@ -493,7 +493,7 @@ A user uploaded an outdoor photo with these real analyzed properties:
 Based strictly on the detected object and visual properties, generate a valid JSON object with:
 1. "keyName": A short, realistic 2-4 word name for this specific object.
 2. "features": An array of 3 distinct visual features matching the photo.
-3. "riddle": A clever, poetic 2-line riddle that hints at this specific physical object so someone can locate it outdoors.
+3. "riddle": A clever, poetic 2-line riddle that hints at this specific physical object so someone can locate it outdoors make it easy not direct.
 
 Format MUST be valid JSON:
 {
