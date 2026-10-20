@@ -79,12 +79,7 @@ export default function App() {
           <span>AI Outdoor Steganography Puzzle Game</span>
         </div>
 
-        <button
-          onClick={() => setIsHowItWorksOpen(true)}
-          className="hover:text-emerald-200 underline text-emerald-400/70"
-        >
-          How to Play Guide
-        </button>
+        
       </footer>
 
       {/* How It Works Modal */}

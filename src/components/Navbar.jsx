@@ -33,7 +33,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenHowItWorks, ciph
             className="btn-secondary text-xs py-2.5 px-4 flex items-center gap-2 shadow-sm font-bold border-emerald-400/40 hover:border-emerald-400"
           >
             <HelpCircle className="w-4 h-4 text-emerald-400" />
-            <span>How It Works</span>
+            <span>How to play</span>
           </button>
         </div>
       </div>
