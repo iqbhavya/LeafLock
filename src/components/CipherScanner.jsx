@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { fetchCipherClue, unlockCipher } from '../api/cipherApi';
 import confetti from 'canvas-confetti';
-import { Camera, Search, Key, AlertCircle, Unlock, RefreshCw, Sparkles, Footprints } from 'lucide-react';
+import { Camera, Search, Key, AlertCircle, Unlock, RefreshCw, Sparkles, Footprints, CheckCircle2 } from 'lucide-react';
 
 export default function CipherScanner({ initialShortCode }) {
   const [shortCodeInput, setShortCodeInput] = useState(initialShortCode || '');
@@ -30,7 +30,7 @@ export default function CipherScanner({ initialShortCode }) {
       if (result.success) {
         setClueData(result);
       } else {
-        setClueError(result.error || 'Cipher not found with that 6-character code.');
+        setClueError(result.error || 'Mission not found with that 6-character code.');
       }
     } catch (err) {
       setClueError('Failed to fetch clue: ' + err.message);
@@ -83,184 +83,229 @@ export default function CipherScanner({ initialShortCode }) {
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="glass-panel p-6 md:p-8 space-y-6 shadow-2xl">
-        <div className="flex items-center gap-3.5 pb-4 border-b border-emerald-900/60">
-          <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-400/40 text-amber-400 flex items-center justify-center shrink-0">
-            <Key className="w-5 h-5" />
+    <div className="max-w-xl mx-auto space-y-6">
+      {/* Primary Neobrutalist Mint Card */}
+      <div className="relative bg-[#4ECDC4] border-4 border-black rounded-3xl p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        
+        {/* Floating Top Badge */}
+        <div className="absolute -top-4 left-6 border-3 border-black bg-white rounded-full px-4 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-1 flex items-center gap-1.5 z-10">
+          <span className="text-[#4ECDC4]">●</span>
+          <span>PLAYER 2: DECRYPT MISSION</span>
+        </div>
+
+        {/* Card Header Box */}
+        <div className="bg-white border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-[#FFE66D] border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] rotate-2">
+            <Camera className="w-6 h-6 text-black stroke-[2.5]" />
           </div>
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold font-heading text-emerald-200">
-              Decrypt a Message (Player 2)
+            <h2 className="text-xl md:text-2xl font-black text-black tracking-tight leading-tight">
+              Decrypt Message Outdoors 📸
             </h2>
-            <p className="text-xs md:text-sm text-emerald-400/80">
-              Enter the 6-character shortcode, read the Gemma riddle, step outside, and snap a matching photo!
+            <p className="text-xs font-bold text-black/70">
+              Enter the code, read the riddle, find the landmark, and snap a photo!
             </p>
           </div>
         </div>
 
-        {/* 6-Character ShortCode Input Field */}
-        <div className="p-5 rounded-2xl bg-slate-950/80 border border-emerald-900/80 space-y-3">
-          <label className="block text-xs font-bold text-emerald-300 font-heading uppercase tracking-wider">
-            Enter 6-Character ShortCode (e.g. OAK-784 or FLR-9B2)
+        {/* 6-Character Mission Code Input Form */}
+        <div className="bg-white border-3 border-black rounded-2xl p-4 md:p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-3">
+          <label className="block text-xs font-black uppercase text-black tracking-wide">
+            Enter 6-Character Code (e.g. OAK-784)
           </label>
-          <div className="flex gap-2.5">
+          <div className="flex gap-2">
             <input
               type="text"
               placeholder="OAK-784"
               value={shortCodeInput}
               onChange={(e) => setShortCodeInput(e.target.value.toUpperCase())}
-              className="input-field text-lg font-mono font-bold tracking-widest uppercase bg-slate-950 border-emerald-800 focus:border-emerald-400 py-3"
+              className="neo-input text-lg font-mono font-black tracking-widest uppercase flex-1"
             />
             <button
+              type="button"
               onClick={() => handleFetchClue(shortCodeInput)}
               disabled={isFetchingClue || !shortCodeInput.trim()}
-              className="btn-primary px-6 whitespace-nowrap text-sm font-bold flex items-center gap-2"
+              className="neo-btn neo-btn-yellow px-4 text-xs font-black uppercase flex items-center gap-1.5 shrink-0"
             >
-              {isFetchingClue ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-              <span>Search Clue</span>
+              {isFetchingClue ? (
+                <RefreshCw className="w-4 h-4 animate-spin stroke-[3]" />
+              ) : (
+                <Search className="w-4 h-4 stroke-[3]" />
+              )}
+              <span>Retrieve Clue 🔍</span>
             </button>
           </div>
 
           {clueError && (
-            <div className="p-3 rounded-xl bg-red-950/60 border border-red-500/40 text-red-300 text-xs flex items-center gap-2">
-              <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+            <div className="p-3 rounded-xl bg-red-100 border-2 border-black text-black text-xs font-bold flex items-center gap-2">
+              <AlertCircle className="w-4 h-4 shrink-0 text-red-600 stroke-[3]" />
               <span>{clueError}</span>
             </div>
           )}
         </div>
 
-        {/* Clue Card */}
+        {/* -------------------------------------------------------------
+            Clue Mission Card (Displayed when Code is Found)
+           ------------------------------------------------------------- */}
         {clueData && (
-          <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-950 to-slate-950 border-2 border-amber-500/60 space-y-4 shadow-2xl animate-fade-in">
-            <div className="flex items-center justify-between border-b border-emerald-900/60 pb-3">
+          <div className="bg-white border-4 border-black rounded-3xl p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-5 animate-pop-in">
+            {/* Clue Header Stamp */}
+            <div className="flex items-center justify-between border-b-3 border-black pb-3">
               <div className="flex items-center gap-2">
-                <span className="badge-amber text-xs font-mono font-extrabold tracking-wider">
+                <span className="bg-[#FFE66D] border-2 border-black px-3 py-1 rounded-lg text-xs font-mono font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
                   CODE: {clueData.shortCode}
                 </span>
                 {clueData.solved && (
-                  <span className="badge-emerald text-xs">
-                    ✓ Already Solved
+                  <span className="bg-[#4ECDC4] border-2 border-black px-2.5 py-1 rounded-lg text-xs font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    ✓ Solved
                   </span>
                 )}
               </div>
-              <span className="text-[11px] text-emerald-400/70 font-mono">
+              <span className="text-xs font-bold font-mono text-black/60">
                 {new Date(clueData.createdAt).toLocaleDateString()}
               </span>
             </div>
 
-            <div>
-              <p className="text-xs text-amber-400 font-semibold mb-1 flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Google Gemma 2 Outdoor Riddle:</span>
-              </p>
-              <div className="p-4 rounded-xl bg-emerald-950/80 border border-amber-500/40 text-amber-200 italic text-base md:text-lg leading-relaxed shadow-inner">
+            {/* Gemma Riddle Speech Bubble */}
+            <div className="bg-[#FFFDF9] border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-black uppercase text-black">
+                <span className="bg-[#C3B1E1] border-2 border-black px-2 py-0.5 rounded text-[10px]">
+                  MISSION CLUE 📜
+                </span>
+                <span>Google Gemma Riddle:</span>
+              </div>
+              <div className="text-base md:text-lg font-bold italic text-black leading-relaxed">
                 "{clueData.riddle}"
               </div>
             </div>
 
-            <div className="p-3 rounded-xl bg-amber-950/30 border border-amber-500/30 text-amber-300 text-xs flex items-center gap-2">
-              <Footprints className="w-4 h-4 text-amber-400 shrink-0" />
-              <span><strong>Touch Grass Goal:</strong> Step outside, find the physical object described by the riddle in nature, and snap a photo.</span>
+            {/* Touch Grass Instruction Banner */}
+            <div className="p-3 rounded-xl bg-amber-50 border-2 border-black text-black text-xs font-bold flex items-center gap-2.5">
+              <Footprints className="w-5 h-5 text-black shrink-0 stroke-[2.5]" />
+              <span>
+                <strong>Touch Grass Goal:</strong> Step outdoors, find the physical object described in the riddle, and snap a photo!
+              </span>
             </div>
 
-            {/* Live Camera Button */}
-            <div className="space-y-4 pt-2">
-              <div className="border-2 border-dashed border-emerald-800 rounded-2xl p-6 bg-slate-950/60 text-center space-y-3">
-                {player2ImagePreview ? (
-                  <div className="relative max-w-sm mx-auto rounded-xl overflow-hidden border border-emerald-500/40 shadow-lg">
-                    <img src={player2ImagePreview} alt="Player 2 Capture" className="w-full h-52 object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent p-3 flex items-end">
-                      <span className="badge-emerald text-[11px]">
-                        📸 Outdoor Photo Ready
-                      </span>
+            {/* Photo Capture / Viewfinder Dropzone */}
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-3 border-dashed border-black bg-[#FDF6E2] hover:bg-[#faeed0] rounded-2xl p-5 text-center cursor-pointer transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] space-y-3"
+            >
+              {player2ImagePreview ? (
+                <div className="space-y-3">
+                  <div className="relative max-w-xs mx-auto rounded-xl overflow-hidden border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white p-2">
+                    <img src={player2ImagePreview} alt="Player 2 Capture" className="w-full h-48 object-cover rounded-lg border-2 border-black" />
+                    <div className="mt-2 text-center font-black text-xs bg-[#FFE66D] border-2 border-black py-1 rounded-md text-black">
+                      📸 Scanned Photo Ready
                     </div>
                   </div>
-                ) : (
-                  <div className="py-4 space-y-2">
-                    <Camera className="w-10 h-10 text-emerald-400/60 mx-auto" />
-                    <p className="text-xs text-emerald-300 font-semibold">
-                      Take or select an outdoor photo to verify
-                    </p>
+                  <p className="text-xs font-black text-black underline">
+                    Click to retake or choose different photo
+                  </p>
+                </div>
+              ) : (
+                <div className="py-4 space-y-2">
+                  <div className="w-14 h-14 rounded-full bg-[#4ECDC4] border-3 border-black text-black flex items-center justify-center mx-auto shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-3">
+                    <Camera className="w-7 h-7 stroke-[2.5]" />
                   </div>
-                )}
-
-                <input
-                  type="file"
-                  ref={fileInputRef}
-                  accept="image/*"
-                  capture="environment"
-                  onChange={handleImageCapture}
-                  className="hidden"
-                />
-
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="btn-secondary text-xs py-2.5 px-5 flex items-center gap-2 mx-auto"
-                >
-                  <Camera className="w-4 h-4 text-emerald-400" />
-                  <span>{player2ImagePreview ? 'Retake Outdoor Photo' : 'Snap Outdoor Photo with Camera'}</span>
-                </button>
-              </div>
-
-              {/* Verify Unlock Action Button */}
-              {player2Image && (
-                <button
-                  onClick={handleVerifyUnlock}
-                  disabled={isVerifying}
-                  className="w-full btn-amber py-4 text-base font-extrabold flex items-center justify-center gap-2 shadow-xl"
-                >
-                  {isVerifying ? (
-                    <>
-                      <RefreshCw className="w-5 h-5 animate-spin text-slate-950" />
-                      <span>Evaluating botanical match with Llama 3.2 Vision referee...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-5 h-5" />
-                      <span>Verify Match & Decrypt Secret Message</span>
-                    </>
-                  )}
-                </button>
+                  <p className="text-sm font-black text-black">
+                    Snap Outdoor Photo to Verify
+                  </p>
+                  <p className="text-xs font-bold text-black/60">
+                    Use camera or choose file from your outdoor walk
+                  </p>
+                  <div className="inline-block bg-white border-2 border-black px-3 py-1 rounded-lg text-xs font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    Take Photo with Camera 📷
+                  </div>
+                </div>
               )}
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                accept="image/*"
+                capture="environment"
+                onChange={handleImageCapture}
+                className="hidden"
+              />
             </div>
 
-            {/* Unlock Verification Result Display */}
+            {/* Verify & Unlock Action Button */}
+            {player2Image && (
+              <button
+                type="button"
+                onClick={handleVerifyUnlock}
+                disabled={isVerifying}
+                className="w-full bg-[#FF6B6B] hover:bg-[#fa5555] text-white border-4 border-black font-black uppercase text-sm md:text-base py-4 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
+              >
+                {isVerifying ? (
+                  <>
+                    <RefreshCw className="w-5 h-5 animate-spin stroke-[3]" />
+                    <span>AI Referee inspecting petals & spectrum... 🧐</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-5 h-5 stroke-[3]" />
+                    <span>Verify Match & Decrypt Secret 🔓</span>
+                  </>
+                )}
+              </button>
+            )}
+
+            {/* -------------------------------------------------------------
+                Unlock Results: Success vs Rejection Speech Bubbles
+               ------------------------------------------------------------- */}
             {unlockResult && (
-              <div className="mt-6 animate-fade-in">
+              <div className="mt-4 animate-pop-in">
                 {unlockResult.success ? (
-                  <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-900 to-slate-950 border-2 border-emerald-400 space-y-4 shadow-2xl">
-                    <div className="flex items-center gap-3 border-b border-emerald-800/60 pb-3">
-                      <div className="w-10 h-10 rounded-full bg-emerald-400 text-slate-950 flex items-center justify-center">
-                        <Unlock className="w-5 h-5 stroke-[2.5]" />
+                  /* Victory Card (Sunshine Yellow) */
+                  <div className="bg-[#FFE66D] border-4 border-black rounded-2xl p-5 md:p-6 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-4">
+                    <div className="flex items-center gap-3 border-b-3 border-black pb-3">
+                      <div className="w-12 h-12 rounded-xl bg-white border-3 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-3">
+                        <Unlock className="w-6 h-6 text-black stroke-[3]" />
                       </div>
                       <div>
-                        <h3 className="font-heading font-extrabold text-lg text-emerald-300">
-                          Botanical Match Verified!
+                        <h3 className="font-black text-xl text-black uppercase tracking-tight">
+                          🎉 Target Verified & Unlocked!
                         </h3>
-                        <p className="text-xs text-emerald-400/80">
-                          AI Referee Reasoning: {unlockResult.reasoning}
+                        <p className="text-xs font-bold text-black/80">
+                          {unlockResult.reasoning}
                         </p>
                       </div>
                     </div>
 
                     <div>
-                      <p className="text-xs text-emerald-400 font-semibold mb-1 uppercase tracking-wider">
-                        🔓 Decrypted Secret Payload Message:
+                      <p className="text-xs font-black uppercase text-black mb-1.5">
+                        🔓 Decrypted Secret Message:
                       </p>
-                      <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/40 text-emerald-200 text-base font-medium shadow-inner">
+                      <div className="bg-white border-3 border-black rounded-xl p-4 font-mono font-black text-lg text-black tracking-wide shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] select-all">
                         "{unlockResult.secretMessage}"
                       </div>
                     </div>
+
+                    {unlockResult.matchedFeatures && (
+                      <div className="flex flex-wrap gap-1.5 pt-1">
+                        {unlockResult.matchedFeatures.map((feat, idx) => (
+                          <span key={idx} className="bg-white border-2 border-black px-2.5 py-0.5 rounded-md text-[10px] font-black shadow-[1px_1px_0px_0px_rgba(0,0,0,1)]">
+                            ✓ {feat}
+                          </span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ) : (
-                  <div className="p-5 rounded-2xl bg-red-950/80 border-2 border-red-500/50 space-y-2 text-red-200">
-                    <div className="flex items-center gap-2 font-bold text-base text-red-300">
-                      <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-                      <span>Target Match Failed</span>
+                  /* Rejection / Friendly Guidance Card */
+                  <div className="bg-white border-4 border-black rounded-2xl p-4 md:p-5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2">
+                    <div className="flex items-center gap-2 font-black text-base text-black">
+                      <AlertCircle className="w-5 h-5 text-red-500 stroke-[3] shrink-0" />
+                      <span>Not Quite the Right Landmark! 🧭</span>
                     </div>
-                    <p className="text-xs text-red-200/90 leading-relaxed">
+                    <p className="text-xs font-bold text-black/80 leading-relaxed bg-amber-50 p-3 rounded-xl border-2 border-black">
                       {unlockResult.reasoning || unlockResult.error}
+                    </p>
+                    <p className="text-[11px] font-bold text-black/60 italic text-center">
+                      Hint: Read the riddle's second line carefully, check the color tone, and snap again!
                     </p>
                   </div>
                 )}

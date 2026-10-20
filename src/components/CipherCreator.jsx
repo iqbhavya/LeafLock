@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { createCipher } from '../api/cipherApi';
 import { QRCodeSVG } from 'qrcode.react';
-import { Lock, Sparkles, Copy, Check, Upload, Image, RefreshCw, X, QrCode, ExternalLink, MessageCircle } from 'lucide-react';
+import { Lock, Sparkles, Copy, Check, Upload, Image, RefreshCw, X, QrCode, ExternalLink, MessageCircle, Camera } from 'lucide-react';
 
 export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
   const [secretMessage, setSecretMessage] = useState('');
@@ -47,7 +47,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
           onCipherCreated(result);
         }
       } else {
-        alert('Failed to create cipher: ' + (result.error || 'Server error'));
+        alert('Failed to lock cipher: ' + (result.error || 'Server error'));
       }
     } catch (err) {
       console.error('Create Cipher Error:', err);
@@ -78,36 +78,45 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
   const shareWhatsApp = () => {
     if (!createdResult) return;
     const huntUrl = getHuntUrl();
-    const text = `🌿 LeafLock Outdoor Steganography Challenge!\n\nI locked a secret message behind a nature object. Read the AI riddle and take a matching photo to unlock it:\n\n${huntUrl}`;
+    const text = `🌿 LeafLock Steganography Challenge!\n\nI locked a secret message behind a nature landmark. Solve the AI riddle and take a matching photo to unlock it:\n\n${huntUrl}`;
     window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
-    <div className="space-y-6 max-w-4xl mx-auto">
-      <div className="glass-panel p-6 md:p-8 space-y-6 shadow-2xl">
-        <div className="flex items-center gap-3.5 pb-4 border-b border-emerald-900/60">
-          <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 border border-emerald-400/40 text-emerald-400 flex items-center justify-center shrink-0">
-            <Lock className="w-5 h-5" />
+    <div className="max-w-xl mx-auto space-y-6">
+      {/* Primary Neobrutalist Coral Card */}
+      <div className="relative bg-[#FF6B6B] border-4 border-black rounded-3xl p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
+        
+        {/* Floating Top Badge */}
+        <div className="absolute -top-4 left-6 border-3 border-black bg-white rounded-full px-4 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-1 flex items-center gap-1.5 z-10">
+          <span className="text-[#FF6B6B]">●</span>
+          <span>PLAYER 1: LOCK SECRET</span>
+        </div>
+
+        {/* Card Header Box */}
+        <div className="bg-white border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl bg-[#FFE66D] border-2 border-black flex items-center justify-center shrink-0 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-2">
+            <Lock className="w-6 h-6 text-black stroke-[2.5]" />
           </div>
           <div>
-            <h2 className="text-xl md:text-2xl font-extrabold font-heading text-emerald-200">
-              Lock a Secret (Player 1)
+            <h2 className="text-xl md:text-2xl font-black text-black tracking-tight leading-tight">
+              Lock Message to Landmark 🌿
             </h2>
-            <p className="text-xs md:text-sm text-emerald-400/80">
-              Upload a photo of an outdoor object in nature. AI Vision extracts key features & Google Gemma 2 crafts a riddle!
+            <p className="text-xs font-bold text-black/70">
+              Snap a landmark, write a note, and let AI craft a cryptic riddle!
             </p>
           </div>
         </div>
 
-        <form onSubmit={handleCreateCipherSubmit} className="space-y-6">
-          {/* Secret Message Input */}
-          <div>
-            <label className="block text-sm font-bold text-emerald-300 font-heading mb-2">
-              1. Hidden Secret Message
+        <form onSubmit={handleCreateCipherSubmit} className="space-y-5">
+          {/* 1. Secret Message Field */}
+          <div className="bg-white border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2">
+            <label className="block text-xs font-black uppercase text-black tracking-wide">
+              1. Secret Note 🤫
             </label>
             <textarea
-              className="input-field textarea-field text-emerald-100 placeholder:text-emerald-700 bg-slate-950/80 border-emerald-800 focus:border-emerald-400"
-              placeholder="Write your hidden message..."
+              className="neo-input w-full min-h-[90px] resize-y placeholder:text-black/40"
+              placeholder="e.g., Meet me under the old willow bridge, or the secret passkey is FOREST_2026!"
               value={secretMessage}
               onChange={(e) => setSecretMessage(e.target.value)}
               rows={3}
@@ -115,34 +124,48 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
             />
           </div>
 
-          {/* Reference Image Capture/Upload */}
-          <div>
-            <label className="block text-sm font-bold text-emerald-300 font-heading mb-2">
-              2. Capture or Upload Photo of Target Nature Object
-            </label>
+          {/* 2. Target Nature Object Dropzone */}
+          <div className="bg-white border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-3">
+            <div className="flex items-center justify-between">
+              <label className="block text-xs font-black uppercase text-black tracking-wide">
+                2. Target Nature Landmark 📸
+              </label>
+              <span className="text-[11px] font-bold text-black/60 bg-amber-100 px-2 py-0.5 rounded border border-black">
+                Leaf, Stone, Bark, Flower
+              </span>
+            </div>
 
-            <div className="border-2 border-dashed border-emerald-800 hover:border-emerald-400 rounded-2xl p-6 bg-slate-950/60 transition-all text-center space-y-4">
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="border-3 border-dashed border-black bg-[#FDF6E2] hover:bg-[#faeed0] rounded-2xl p-6 text-center cursor-pointer transition-all shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            >
               {keyImagePreview ? (
-                <div className="relative max-w-sm mx-auto rounded-xl overflow-hidden border border-emerald-500/40 shadow-lg">
-                  <img src={keyImagePreview} alt="Key Reference" className="w-full h-52 object-cover" />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent p-3 flex items-end">
-                    <span className="badge-emerald text-[11px]">
-                      📸 Object Locked
-                    </span>
+                <div className="space-y-3">
+                  <div className="relative max-w-xs mx-auto rounded-xl overflow-hidden border-3 border-black shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] bg-white p-2">
+                    <img src={keyImagePreview} alt="Key Landmark" className="w-full h-48 object-cover rounded-lg border-2 border-black" />
+                    <div className="mt-2 text-center font-black text-xs bg-[#4ECDC4] border-2 border-black py-1 rounded-md text-black">
+                      📸 Landmark Photo Locked!
+                    </div>
                   </div>
+                  <p className="text-xs font-black text-black underline">
+                    Click to choose a different photo
+                  </p>
                 </div>
               ) : (
-                <div className="py-6 space-y-3 cursor-pointer" onClick={() => fileInputRef.current?.click()}>
-                  <div className="w-14 h-14 rounded-2xl bg-emerald-950/80 border border-emerald-700 text-emerald-400 flex items-center justify-center mx-auto">
-                    <Image className="w-7 h-7" />
+                <div className="py-4 space-y-3">
+                  <div className="w-16 h-16 rounded-full bg-[#FFE66D] border-3 border-black text-black flex items-center justify-center mx-auto shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] -rotate-3">
+                    <Camera className="w-8 h-8 stroke-[2.5]" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-emerald-200">
-                      Snap or Upload Photo from Nature
+                    <p className="text-sm font-black text-black">
+                      Snap or Upload Outdoor Landmark
                     </p>
-                    <p className="text-xs text-emerald-500/80 mt-1">
-                      (Oak leaf, pinecone, wildflower, trail stone, bark, etc.)
+                    <p className="text-xs font-bold text-black/60 mt-1">
+                      (Oak leaf, pinecone, daisy, trail marker, mossy stone)
                     </p>
+                  </div>
+                  <div className="inline-block bg-white border-2 border-black px-3 py-1 rounded-lg text-xs font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                    Take Photo with Camera 📷
                   </div>
                 </div>
               )}
@@ -155,129 +178,145 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
                 onChange={handleImageUpload}
                 className="hidden"
               />
-
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="btn-secondary text-xs py-2 px-4 flex items-center gap-2 mx-auto"
-              >
-                <Upload className="w-4 h-4" />
-                <span>{keyImagePreview ? 'Change Photo' : 'Select Photo'}</span>
-              </button>
             </div>
           </div>
 
-          {/* Custom Riddle Toggle */}
-          <div className="p-4 rounded-xl bg-slate-950/60 border border-emerald-900/60 space-y-3">
+          {/* 3. Optional Custom Riddle Toggle */}
+          <div className="bg-white border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-emerald-300 flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span>Custom Riddle (Optional)</span>
+              <label className="text-xs font-black uppercase text-black">
+                3. Riddle Generation 📜
               </label>
-
               <button
                 type="button"
                 onClick={() => setUseCustomRiddle(!useCustomRiddle)}
-                className={`text-xs px-3 py-1 rounded-full border transition-all ${useCustomRiddle
-                    ? 'bg-amber-500/20 text-amber-300 border-amber-500/50'
-                    : 'bg-emerald-950 text-emerald-400 border-emerald-800'
-                  }`}
+                className={`text-xs px-3 py-1 rounded-full border-2 border-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${
+                  useCustomRiddle
+                    ? 'bg-[#FFE66D] text-black'
+                    : 'bg-white text-black hover:bg-gray-100'
+                }`}
               >
-                {useCustomRiddle ? 'Custom Riddle Active' : 'Let Google Gemma 2 Auto-Craft'}
+                {useCustomRiddle ? 'Custom Riddle Active ✍️' : 'Auto AI Gemma Riddle 🤖'}
               </button>
             </div>
 
-            {useCustomRiddle && (
-              <textarea
-                className="input-field text-sm font-medium italic text-amber-200 bg-emerald-950/60 border-amber-500/40"
-                rows={2}
-                placeholder="Write your own custom cryptic riddle..."
+            {useCustomRiddle ? (
+              <input
+                type="text"
+                placeholder="Write your own 2-line rhyming riddle clue..."
                 value={customRiddleText}
                 onChange={(e) => setCustomRiddleText(e.target.value)}
+                className="neo-input text-xs"
               />
+            ) : (
+              <p className="text-xs font-bold text-black/70">
+                Google Gemma will automatically synthesize a 2-line nature poem from detected visual traits!
+              </p>
             )}
           </div>
 
-          {/* Lock Behind Nature Action Button */}
+          {/* Primary Submit Button */}
           <button
             type="submit"
             disabled={isLoading || !secretMessage.trim() || !keyImage}
-            className="w-full btn-primary py-4 text-base font-extrabold flex items-center justify-center gap-2 shadow-xl"
+            className="w-full bg-[#4ECDC4] hover:bg-[#3dbdb5] text-black border-4 border-black font-black uppercase text-sm md:text-base py-4 rounded-2xl shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-60"
           >
             {isLoading ? (
               <>
-                <RefreshCw className="w-5 h-5 animate-spin text-slate-950" />
-                <span>Analyzing flora features with MobileNet & Google Gemma...</span>
+                <RefreshCw className="w-5 h-5 animate-spin stroke-[3]" />
+                <span>AI Inspecting Pixels & Writing Riddle... 🧐</span>
               </>
             ) : (
               <>
-                <Lock className="w-5 h-5" />
-                <span>Lock Behind Nature</span>
+                <Lock className="w-5 h-5 stroke-[3]" />
+                <span>Lock Message to Landmark 🚀</span>
               </>
             )}
           </button>
         </form>
 
-        {/* Success Modal with QR Code and Direct Hunt Link */}
+        {/* -------------------------------------------------------------
+            Success Modal: Board Game Clue Ticket (Sunshine Yellow)
+           ------------------------------------------------------------- */}
         {createdResult && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md animate-fade-in">
-            <div className="relative w-full max-w-lg glass-panel p-6 border-2 border-emerald-400 space-y-4 shadow-2xl max-h-[92vh] overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-emerald-900/60 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🌿</span>
-                  <h3 className="font-heading font-extrabold text-lg text-emerald-200">
-                    Cipher Locked in Nature!
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-pop-in">
+            <div className="relative w-full max-w-lg bg-[#FFE66D] border-4 border-black rounded-3xl p-6 md:p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-4 max-h-[92vh] overflow-y-auto">
+              
+              {/* Close Button */}
+              <button
+                type="button"
+                onClick={() => setCreatedResult(null)}
+                className="absolute top-5 right-5 p-1.5 rounded-xl bg-white border-2 border-black hover:bg-rose-100 shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all"
+              >
+                <X className="w-5 h-5 text-black stroke-[3]" />
+              </button>
+
+              {/* Ticket Header */}
+              <div className="flex items-center gap-2.5 pb-2">
+                <span className="text-3xl">🎟️</span>
+                <div>
+                  <h3 className="font-black text-xl md:text-2xl text-black uppercase tracking-tight">
+                    Clue Ticket Created!
                   </h3>
+                  <p className="text-xs font-bold text-black/70">
+                    Give this mission to Player 2 to solve outdoors
+                  </p>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setCreatedResult(null)}
-                  className="p-1 rounded-lg text-emerald-400/70 hover:text-emerald-200"
-                >
-                  <X className="w-5 h-5" />
-                </button>
               </div>
 
-              <div>
-                <p className="text-xs text-emerald-400 font-semibold mb-1">Target Object Identified:</p>
-                <p className="text-base font-bold text-emerald-200">{createdResult.keyName}</p>
+              {/* Identified Specimen Stamp */}
+              <div className="bg-white border-3 border-black rounded-2xl p-3 shadow-[3px_3px_0px_0px_rgba(0,0,0,1)] flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-black uppercase text-black/60">Target Specimen</p>
+                  <p className="text-base font-black text-black">{createdResult.keyName}</p>
+                </div>
+                <span className="bg-[#4ECDC4] border-2 border-black px-2.5 py-1 rounded-lg text-xs font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]">
+                  LOCKED 🔒
+                </span>
               </div>
 
-              <div>
-                <p className="text-xs text-amber-400 font-semibold mb-1">Google Gemma 2 Cryptic Riddle:</p>
-                <div className="p-3.5 rounded-xl bg-emerald-950/80 border border-amber-500/40 text-amber-200 italic text-sm">
+              {/* Poetic Riddle Speech Bubble */}
+              <div className="bg-[#FFFDF9] border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-1">
+                <div className="flex items-center gap-1.5 text-xs font-black text-black uppercase">
+                  <span>📜 Gemma's Cryptic Riddle:</span>
+                </div>
+                <p className="text-sm font-bold italic text-black leading-relaxed">
                   "{createdResult.riddle}"
-                </div>
+                </p>
               </div>
 
-              {/* Share Method Toggle */}
-              <div className="flex rounded-lg bg-slate-950 p-1 border border-emerald-900/60 text-xs font-semibold">
+              {/* Share Method Switcher Tabs */}
+              <div className="grid grid-cols-2 gap-2 bg-white p-1 rounded-xl border-3 border-black">
                 <button
                   type="button"
                   onClick={() => setShowQR(true)}
-                  className={`flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5 transition-all ${
-                    showQR ? 'bg-emerald-500 text-slate-950 font-bold shadow' : 'text-emerald-400/70 hover:text-emerald-200'
+                  className={`py-2 rounded-lg font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+                    showQR
+                      ? 'bg-[#FF6B6B] text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      : 'text-black hover:bg-gray-100'
                   }`}
                 >
-                  <QrCode className="w-3.5 h-3.5" />
+                  <QrCode className="w-4 h-4 stroke-[2.5]" />
                   <span>Outdoor QR Code</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setShowQR(false)}
-                  className={`flex-1 py-1.5 rounded-md flex items-center justify-center gap-1.5 transition-all ${
-                    !showQR ? 'bg-emerald-500 text-slate-950 font-bold shadow' : 'text-emerald-400/70 hover:text-emerald-200'
+                  className={`py-2 rounded-lg font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
+                    !showQR
+                      ? 'bg-[#4ECDC4] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
+                      : 'text-black hover:bg-gray-100'
                   }`}
                 >
-                  <ExternalLink className="w-3.5 h-3.5" />
-                  <span>Link</span>
+                  <ExternalLink className="w-4 h-4 stroke-[2.5]" />
+                  <span>Mission Link</span>
                 </button>
               </div>
 
               {/* QR Code Card */}
               {showQR ? (
-                <div className="p-4 rounded-xl bg-slate-950 border border-emerald-500/30 text-center space-y-3">
-                  <div className="bg-white p-3 rounded-2xl w-fit mx-auto shadow-lg shadow-emerald-500/10">
+                <div className="bg-white border-3 border-black rounded-2xl p-4 text-center space-y-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <div className="bg-white p-3 rounded-xl border-2 border-black w-fit mx-auto shadow-[3px_3px_0px_0px_rgba(0,0,0,1)]">
                     <QRCodeSVG
                       value={getHuntUrl()}
                       size={140}
@@ -285,65 +324,65 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
                       includeMargin={false}
                     />
                   </div>
-                  <p className="text-[11px] text-emerald-300/80 max-w-xs mx-auto">
-                    Point any phone camera at this QR code to jump straight into Decrypt Mode outdoors!
+                  <p className="text-[11px] font-black text-black/70">
+                    Scan with any phone camera to jump straight into Decrypt Mode outdoors!
                   </p>
                 </div>
               ) : (
-                <div className="p-3.5 rounded-xl bg-slate-950 border border-emerald-500/30 space-y-2.5">
-                  <p className="text-[11px] font-mono text-emerald-400">Direct Hunt URL:</p>
-                  <div className="p-2 rounded bg-emerald-950/60 border border-emerald-900 text-xs font-mono text-emerald-300 break-all select-all">
+                <div className="bg-white border-3 border-black rounded-2xl p-3.5 space-y-2.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+                  <p className="text-[10px] font-black uppercase text-black/60">Direct Mission Link:</p>
+                  <div className="p-2 rounded-lg bg-amber-50 border-2 border-black text-xs font-mono font-bold text-black break-all select-all">
                     {getHuntUrl()}
                   </div>
                   <div className="flex gap-2">
                     <button
                       type="button"
                       onClick={copyHuntLink}
-                      className="flex-1 btn-primary text-xs py-2 flex items-center justify-center gap-1.5"
+                      className="flex-1 neo-btn neo-btn-mint text-xs py-2"
                     >
-                      {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                      <span>{copiedLink ? 'Copied Link!' : 'Copy Link'}</span>
+                      {copiedLink ? <Check className="w-4 h-4 stroke-[3]" /> : <Copy className="w-4 h-4 stroke-[2.5]" />}
+                      <span>{copiedLink ? 'Copied Link!' : 'Copy Mission Link'}</span>
                     </button>
                     <button
                       type="button"
                       onClick={shareWhatsApp}
-                      className="btn-secondary text-xs py-2 px-3 flex items-center gap-1.5 text-emerald-300 border-emerald-700 hover:border-emerald-400"
+                      className="neo-btn neo-btn-white text-xs py-2 px-3 text-black"
                     >
-                      <MessageCircle className="w-3.5 h-3.5 text-emerald-400" />
+                      <MessageCircle className="w-4 h-4 stroke-[2.5]" />
                       <span>WhatsApp</span>
                     </button>
                   </div>
                 </div>
               )}
 
-              {/* ShortCode backup */}
-              <div className="p-3.5 rounded-xl bg-slate-950/80 border border-emerald-900/60 flex items-center justify-between">
+              {/* 6-Character ShortCode Box */}
+              <div className="bg-white border-3 border-black rounded-2xl p-3.5 flex items-center justify-between shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
                 <div>
-                  <p className="text-[10px] text-emerald-400/80 font-mono">Game ShortCode:</p>
-                  <p className="text-lg font-mono font-black text-emerald-300 tracking-wider">
+                  <p className="text-[10px] font-black uppercase text-black/60 font-mono">Mission Code:</p>
+                  <p className="text-2xl font-black font-mono text-black tracking-wider">
                     {createdResult.shortCode}
                   </p>
                 </div>
-
                 <button
                   type="button"
                   onClick={copyShareCode}
-                  className="btn-secondary text-xs py-1.5 px-3 flex items-center gap-1.5"
+                  className="neo-btn neo-btn-pink text-xs py-2 px-3.5"
                 >
-                  {copiedCode ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                  {copiedCode ? <Check className="w-4 h-4 stroke-[3]" /> : <Copy className="w-4 h-4 stroke-[2.5]" />}
                   <span>{copiedCode ? 'Copied!' : 'Copy Code'}</span>
                 </button>
               </div>
 
+              {/* Test Code Action Button */}
               <button
                 type="button"
                 onClick={() => {
                   if (onNavigateToScan) onNavigateToScan(createdResult.shortCode);
                   setCreatedResult(null);
                 }}
-                className="w-full btn-amber text-xs py-3 flex items-center justify-center gap-2 font-bold"
+                className="w-full neo-btn neo-btn-white text-xs md:text-sm py-3.5 text-black font-black"
               >
-                <span>Switch to Decrypt Mode & Test Code</span>
+                <span>Switch to Decrypt Mode & Test Code 🔍</span>
               </button>
             </div>
           </div>
