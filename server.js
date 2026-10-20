@@ -20,6 +20,7 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
@@ -34,63 +35,70 @@ app.use(express.static(path.join(__dirname, 'dist')));
 // ---------------------------------------------------------------------------
 function extractJSONObject(text) {
   if (!text) return null;
-  try { return JSON.parse(text); } catch (e) {}
+  try { return JSON.parse(text); } catch (e) { }
 
   const stripped = text.replace(/```(?:json)?/gi, '').trim();
-  try { return JSON.parse(stripped); } catch (e) {}
+  try { return JSON.parse(stripped); } catch (e) { }
 
   const matches = [...text.matchAll(/\{[\s\S]*?\}/g)];
   for (let i = matches.length - 1; i >= 0; i--) {
     try {
       const obj = JSON.parse(matches[i][0]);
       if (typeof obj === 'object' && obj !== null) return obj;
-    } catch (e) {}
+    } catch (e) { }
   }
 
   const match = text.match(/\{[\s\S]*\}/);
   if (match) {
-    try { return JSON.parse(match[0]); } catch (e) {}
+    try { return JSON.parse(match[0]); } catch (e) { }
   }
   return null;
 }
 
-async function callGoogleAIStudio(prompt, jsonMode = false) {
-  if (!genAI) throw new Error('Google AI Studio API key not set');
+// ---------------------------------------------------------------------------
+// Groq LLM Pipeline (Ultra-fast qwen/qwen3.8-27b on LPU)
+// ---------------------------------------------------------------------------
+async function callGroqAI(prompt, jsonMode = false) {
+  if (!GROQ_API_KEY) throw new Error('GROQ_API_KEY is not set');
 
-  // Primary fast high-throughput model
-  const candidateModels = [
-    'gemini-3.5-flash-lite',
-    'gemini-flash-lite-latest'
-  ];
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${GROQ_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model: 'qwen/qwen3.8-27b',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are an expert AI nature cryptographer and botanical referee for LeafLock steganography. Always respond strictly in valid JSON format.'
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      response_format: jsonMode ? { type: 'json_object' } : undefined,
+      temperature: 0.6,
+      max_tokens: 300
+    })
+  });
 
-  for (const m of candidateModels) {
-    try {
-      const config = {
-        temperature: 0.6,
-        maxOutputTokens: 250
-      };
-      if (jsonMode) {
-        config.responseMimeType = 'application/json';
-      }
-      const model = genAI.getGenerativeModel({ model: m, generationConfig: config });
-
-      const apiCall = model.generateContent(prompt);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error(`Timeout after 12000ms on ${m}`)), 12000)
-      );
-
-      const result = await Promise.race([apiCall, timeoutPromise]);
-      const text = result.response.text();
-      if (text) {
-        return text;
-      }
-    } catch (err) {
-      console.warn(`Google AI Studio model (${m}) failed or timed out:`, err.message);
-      break; // Avoid stacking sequential 12s timeouts; fall back immediately
-    }
+  if (!res.ok) {
+    const errText = await res.text();
+    throw new Error(`Groq API error (${res.status}): ${errText}`);
   }
-  throw new Error('Candidate Google AI Studio models failed');
+
+  const data = await res.json();
+  if (data.choices && data.choices[0] && data.choices[0].message) {
+    return data.choices[0].message.content;
+  }
+  throw new Error('Groq returned empty response');
 }
+
+// Alias for seamless backward compatibility across the codebase
+const callGoogleAIStudio = callGroqAI;
 
 // ---------------------------------------------------------------------------
 // Database & Vision Model Initialization
@@ -216,7 +224,7 @@ async function evaluateDynamicSemanticMatch(label1, label2) {
     return { isSameCategory: true, confidence: 85, reason: `Both belong to the same outdoor botanical category (${matchingBotanics[0]}).` };
   }
 
-  if (!GEMINI_API_KEY) return { isSameCategory: true, reason: 'Fallback visual matching.' };
+  if (!GROQ_API_KEY && !GEMINI_API_KEY) return { isSameCategory: true, reason: 'Fallback visual matching.' };
 
   const prompt = `You are a strict AI Object & Species Matcher for LeafLock steganography.
 Compare two AI-detected labels from two user photos:
@@ -448,7 +456,7 @@ async function compareProfiles(p1, p2) {
 
   if (p1.objectLabel && p2.objectLabel) {
     const aiEval = await evaluateDynamicSemanticMatch(p1.objectLabel, p2.objectLabel);
-    
+
     if (aiEval.isSameCategory) {
       finalSimilarity = Math.min(99, Math.round((baseSimilarity * 0.55) + 40));
       domainNote = `AI Semantic Match confirmed: ${aiEval.reason}`;
@@ -467,7 +475,7 @@ async function compareProfiles(p1, p2) {
 // Dynamic AI Riddle Generation
 // ---------------------------------------------------------------------------
 async function generateDynamicRiddle(visualProfile) {
-  if (!GEMINI_API_KEY) {
+  if (!GROQ_API_KEY && !GEMINI_API_KEY) {
     return getFallbackRiddle(visualProfile);
   }
 

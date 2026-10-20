@@ -95,7 +95,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
     <div className="max-w-xl mx-auto space-y-6">
       {/* Primary Neobrutalist Coral Card */}
       <div className="relative bg-[#FF6B6B] border-4 border-black rounded-3xl p-6 md:p-8 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] space-y-6">
-        
+
         {/* Floating Top Badge */}
         <div className="absolute -top-4 left-6 border-3 border-black bg-white rounded-full px-4 py-1 font-black text-xs uppercase shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] -rotate-1 flex items-center gap-1.5 z-10">
           <span className="text-[#FF6B6B]">●</span>
@@ -199,13 +199,12 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
               <button
                 type="button"
                 onClick={() => setUseCustomRiddle(!useCustomRiddle)}
-                className={`text-xs px-3 py-1 rounded-full border-2 border-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${
-                  useCustomRiddle
+                className={`text-xs px-3 py-1 rounded-full border-2 border-black font-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] transition-all ${useCustomRiddle
                     ? 'bg-[#FFE66D] text-black'
                     : 'bg-white text-black hover:bg-gray-100'
-                }`}
+                  }`}
               >
-                {useCustomRiddle ? 'Custom Riddle Active ✍️' : 'Auto AI Gemma Riddle 🤖'}
+                {!useCustomRiddle ? 'Activate Custom Riddle ✍️' : 'Activate AI Riddle 🤖'}
               </button>
             </div>
 
@@ -219,7 +218,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
               />
             ) : (
               <p className="text-xs font-bold text-black/70">
-                Google Gemma will automatically synthesize a 2-line nature poem from detected visual traits!
+                AI will automatically synthesize a 2-line nature poem from detected visual traits!
               </p>
             )}
           </div>
@@ -250,7 +249,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
         {createdResult && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-pop-in">
             <div className="relative w-full max-w-lg bg-[#FFE66D] border-4 border-black rounded-3xl p-6 md:p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] space-y-4 max-h-[92vh] overflow-y-auto">
-              
+
               {/* Close Button */}
               <button
                 type="button"
@@ -287,7 +286,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
               {/* Poetic Riddle Speech Bubble */}
               <div className="bg-[#FFFDF9] border-3 border-black rounded-2xl p-4 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] space-y-1">
                 <div className="flex items-center gap-1.5 text-xs font-black text-black uppercase">
-                  <span>📜 Gemma's Cryptic Riddle:</span>
+                  <span>📜 AI's Cryptic Riddle:</span>
                 </div>
                 <p className="text-sm font-bold italic text-black leading-relaxed">
                   "{createdResult.riddle}"
@@ -299,11 +298,10 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
                 <button
                   type="button"
                   onClick={() => setShowQR(true)}
-                  className={`py-2 rounded-lg font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
-                    showQR
+                  className={`py-2 rounded-lg font-black text-xs flex items-center justify-center gap-1.5 transition-all ${showQR
                       ? 'bg-[#FF6B6B] text-white border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                       : 'text-black hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <QrCode className="w-4 h-4 stroke-[2.5]" />
                   <span>Outdoor QR Code</span>
@@ -311,11 +309,10 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
                 <button
                   type="button"
                   onClick={() => setShowQR(false)}
-                  className={`py-2 rounded-lg font-black text-xs flex items-center justify-center gap-1.5 transition-all ${
-                    !showQR
+                  className={`py-2 rounded-lg font-black text-xs flex items-center justify-center gap-1.5 transition-all ${!showQR
                       ? 'bg-[#4ECDC4] text-black border-2 border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]'
                       : 'text-black hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <ExternalLink className="w-4 h-4 stroke-[2.5]" />
                   <span>Mission Link</span>
@@ -339,7 +336,7 @@ export default function CipherCreator({ onCipherCreated, onNavigateToScan }) {
                 </div>
               ) : (
                 <div className="bg-white border-3 border-black rounded-2xl p-3.5 space-y-2.5 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
-                  <p className="text-[10px] font-black uppercase text-black/60">Direct Mission Link:</p>
+                  <p className="text-[10px] font-black uppercase text-black/60">Mission Link:</p>
                   <div className="p-2 rounded-lg bg-amber-50 border-2 border-black text-xs font-mono font-bold text-black break-all select-all">
                     {getHuntUrl()}
                   </div>
