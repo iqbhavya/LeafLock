@@ -10,7 +10,7 @@ export default function App() {
   const [targetShortCode, setTargetShortCode] = useState('');
   const [isHowItWorksOpen, setIsHowItWorksOpen] = useState(false);
   
-  // Seed initial sample ciphers
+  
   const [ciphers, setCiphers] = useState([]);
 
   const handleCipherCreated = (newCipher) => {
@@ -69,8 +69,6 @@ export default function App() {
           <span>•</span>
           <span>AI Outdoor Steganography Puzzle Game</span>
         </div>
-
-        
       </footer>
 
       {/* How It Works Modal */}

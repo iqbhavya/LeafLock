@@ -19,11 +19,11 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const GEMINI_API_KEY = process.env.Google_ai_studio_key || process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_STUDIO_KEY || process.env.GROQ_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 const genAI = GEMINI_API_KEY ? new GoogleGenerativeAI(GEMINI_API_KEY) : null;
 
-// Middleware
+
 app.use(cors());
 app.use(bodyParser.json({ limit: '20mb' }));
 app.use(bodyParser.urlencoded({ limit: '20mb', extended: true }));
@@ -86,6 +86,7 @@ async function callGoogleAIStudio(prompt, jsonMode = false) {
 // ---------------------------------------------------------------------------
 // Database & Vision Model Initialization
 // ---------------------------------------------------------------------------
+
 let isMongoConnected = false;
 
 const connectMongoDB = async () => {
