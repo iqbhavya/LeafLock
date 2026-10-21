@@ -8,6 +8,7 @@
 [![Vite](https://img.shields.io/badge/Vite-8.3-646CFF?logo=vite)](https://vitejs.dev)
 [![Groq](https://img.shields.io/badge/Groq-LPUs-F55036)](https://groq.com)
 [![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-47A248?logo=mongodb)](https://mongodb.com)
+[![LinkedIn](https://img.shields.io/badge/LinkedIn-Connect-0A66C2?logo=linkedin)](https://www.linkedin.com/in/iqbhavya)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 ---
@@ -206,6 +207,14 @@ npm run dev
 ```
 
 Visit `http://localhost:5173` to test the application locally.
+
+---
+
+## 👨‍💻 Author & Contact
+
+**Bhavya Yadav**  
+* GitHub: [@iqbhavya](https://github.com/iqbhavya)  
+* LinkedIn: [in/iqbhavya](https://www.linkedin.com/in/iqbhavya)
 
 ---
 
